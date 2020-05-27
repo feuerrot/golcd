@@ -12,26 +12,16 @@ import (
 	"golang.org/x/image/math/fixed"
 )
 
-func centerdraw(d *font.Drawer, s string, fb image.Image) {
-	d.Dot = fixed.P(0, 0)
-	bounds, _ := d.BoundString(s)
-	fbsize := fb.Bounds()
-	fbSize := fixed.P(fbsize.Max.X, fbsize.Max.Y)
-
-	sSize := fixed.Point26_6{bounds.Max.X, bounds.Min.Y}
-	tmp := fbSize.Sub(sSize)
-	d.Dot = tmp.Div(fixed.I(2))
-
-	d.DrawString(s)
-}
-
 func calcorigin(d *font.Drawer, s string, fb image.Image) fixed.Point26_6 {
 	d.Dot = fixed.P(0, 0)
 	bounds, _ := d.BoundString(s)
 	fbsize := fb.Bounds()
 	fbSize := fixed.P(fbsize.Max.X, fbsize.Max.Y)
 
-	sSize := fixed.Point26_6{bounds.Max.X, bounds.Min.Y}
+	sSize := fixed.Point26_6{
+		X: bounds.Max.X,
+		Y: bounds.Min.Y,
+	}
 	tmp := fbSize.Sub(sSize)
 	origin := tmp.Div(fixed.I(2))
 
