@@ -30,8 +30,8 @@ func calcorigin(d *font.Drawer, s string, fb image.Image) fixed.Point26_6 {
 	return origin
 }
 
-func getColor(offset int64) color.Color {
-	index := (time.Now().Unix() + offset) % 360
+func getColor(offset int) color.Color {
+	index := time.Now().Hour()*15 + offset
 	return colorful.Hsv(float64(index), 1, 1)
 }
 
@@ -44,7 +44,7 @@ func main() {
 
 	buffer := image.NewRGBA(fb.Bounds())
 	bg := image.NewUniform(getColor(0))
-	fg := image.NewUniform(getColor(180))
+	fg := image.Black
 	draw.Draw(buffer, buffer.Bounds(), bg, image.ZP, draw.Src)
 
 	ttfont, err := truetype.Parse(gomono.TTF)
@@ -68,7 +68,6 @@ func main() {
 		t = time.Now()
 		s = t.Format("15:04:05")
 
-		fg.C = getColor(180)
 		bg.C = getColor(0)
 		draw.Draw(buffer, buffer.Bounds(), bg, image.ZP, draw.Src)
 		d.Dot = origin
