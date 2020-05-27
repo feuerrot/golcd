@@ -2,11 +2,13 @@ package main
 
 import (
 	"image"
+	"image/color"
 	"image/draw"
 	"time"
 
 	"github.com/golang/freetype/truetype"
 	"github.com/gonutz/framebuffer"
+	"github.com/lucasb-eyer/go-colorful"
 	"golang.org/x/image/font"
 	"golang.org/x/image/font/gofont/gomono"
 	"golang.org/x/image/math/fixed"
@@ -28,6 +30,11 @@ func calcorigin(d *font.Drawer, s string, fb image.Image) fixed.Point26_6 {
 	return origin
 }
 
+func getColor(offset int64) color.Color {
+	index := (time.Now().Unix() + offset) % 360
+	return colorful.Hsv(float64(index), 1, 1)
+}
+
 func main() {
 	fb, err := framebuffer.Open("/dev/fb1")
 	if err != nil {
@@ -35,8 +42,10 @@ func main() {
 	}
 	defer fb.Close()
 
-	img := image.NewRGBA(fb.Bounds())
-	draw.Draw(img, img.Bounds(), image.Black, image.ZP, draw.Src)
+	buffer := image.NewRGBA(fb.Bounds())
+	bg := image.NewUniform(getColor(0))
+	fg := image.NewUniform(getColor(180))
+	draw.Draw(buffer, buffer.Bounds(), bg, image.ZP, draw.Src)
 
 	ttfont, err := truetype.Parse(gomono.TTF)
 	ttfoption := &truetype.Options{
@@ -45,12 +54,12 @@ func main() {
 	}
 
 	d := &font.Drawer{
-		Dst:  img,
-		Src:  image.White,
+		Dst:  buffer,
+		Src:  fg,
 		Face: truetype.NewFace(ttfont, ttfoption),
 	}
 
-	var origin = calcorigin(d, "23:59:59", img)
+	var origin = calcorigin(d, "23:59:59", fb)
 
 	var t time.Time
 	var s string
@@ -59,11 +68,13 @@ func main() {
 		t = time.Now()
 		s = t.Format("15:04:05")
 
-		draw.Draw(img, img.Bounds(), image.Black, image.ZP, draw.Src)
+		fg.C = getColor(180)
+		bg.C = getColor(0)
+		draw.Draw(buffer, buffer.Bounds(), bg, image.ZP, draw.Src)
 		d.Dot = origin
 		d.DrawString(s)
 		sleep := time.Until(time.Now().Truncate(time.Second).Add(time.Second))
 		time.Sleep(sleep)
-		draw.Draw(fb, fb.Bounds(), img, image.ZP, draw.Src)
+		draw.Draw(fb, fb.Bounds(), buffer, image.ZP, draw.Src)
 	}
 }
