@@ -31,7 +31,7 @@ func calcorigin(d *font.Drawer, s string, fb image.Image) fixed.Point26_6 {
 }
 
 func getColor(offset int) color.Color {
-	index := time.Now().Hour()*15 + offset
+	index := time.Now().Minute()*6 + offset
 	return colorful.Hsv(float64(index), 1, 1)
 }
 
