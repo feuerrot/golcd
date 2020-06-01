@@ -14,6 +14,8 @@ import (
 	"golang.org/x/image/math/fixed"
 )
 
+var origin fixed.Point26_6
+
 func calcorigin(d *font.Drawer, s string, fb image.Image) fixed.Point26_6 {
 	d.Dot = fixed.P(0, 0)
 	bounds, _ := d.BoundString(s)
@@ -33,6 +35,20 @@ func calcorigin(d *font.Drawer, s string, fb image.Image) fixed.Point26_6 {
 func getColor(offset int) color.Color {
 	index := time.Now().Minute()*6 + offset
 	return colorful.Hsv(float64(index), 1, 1)
+}
+
+func drawTime(tick time.Time, d *font.Drawer, bg image.Image, buffer draw.Image) {
+	// We need to draw the next second, as we do a sleep until the start of the next second
+	s := tick.Format("15:04:05")
+
+	draw.Draw(buffer, buffer.Bounds(), bg, image.ZP, draw.Src)
+	d.Dot = origin
+	d.DrawString(s)
+}
+
+func sleepUntilNextSecond(tick time.Time) {
+	//fmt.Printf("now: %v, trunc: %v, next: %v\n", time.Now(), time.Now().Truncate(time.Second), tick)
+	time.Sleep(time.Until(tick))
 }
 
 func main() {
@@ -59,21 +75,16 @@ func main() {
 		Face: truetype.NewFace(ttfont, ttfoption),
 	}
 
-	var origin = calcorigin(d, "23:59:59", fb)
-
-	var t time.Time
-	var s string
+	origin = calcorigin(d, "23:59:59", fb)
 
 	for {
-		t = time.Now()
-		s = t.Format("15:04:05")
-
+		nextTick := time.Now().Truncate(time.Second).Add(time.Second)
 		bg.C = getColor(0)
-		draw.Draw(buffer, buffer.Bounds(), bg, image.ZP, draw.Src)
-		d.Dot = origin
-		d.DrawString(s)
-		sleep := time.Until(time.Now().Truncate(time.Second).Add(time.Second))
-		time.Sleep(sleep)
+		drawTime(nextTick, d, bg, buffer)
+
+		sleepUntilNextSecond(nextTick)
+
+		// copy buffer
 		draw.Draw(fb, fb.Bounds(), buffer, image.ZP, draw.Src)
 	}
 }
