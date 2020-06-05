@@ -33,7 +33,7 @@ func calcorigin(d *font.Drawer, s string, fb image.Image) fixed.Point26_6 {
 }
 
 func getColor(offset int) color.Color {
-	index := time.Now().Minute()*6 + offset
+	index := (time.Now().Add(time.Second).Minute()*6 + offset) % 360
 	return colorful.Hsv(float64(index), 1, 1)
 }
 
@@ -79,7 +79,7 @@ func main() {
 
 	for {
 		nextTick := time.Now().Truncate(time.Second).Add(time.Second)
-		bg.C = getColor(0)
+		bg.C = getColor(time.Now().Add(time.Second).Truncate(time.Second).Second() / 10)
 		drawTime(nextTick, d, bg, buffer)
 
 		sleepUntilNextSecond(nextTick)
